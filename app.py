@@ -31,7 +31,7 @@ def sgpa():
         credits = request.form.getlist("credits")
         grades = request.form.getlist("grade")
 
-        sgpa_value = calculate_SGPA(credits, grades)
+        sgpa_value = calculate_sgpa(credits, grades)
 
     return render_template(
         "index.html", sgpa=sgpa_value, old_credits=credits, old_grades=grades
@@ -50,7 +50,7 @@ def estimator():
             sem_credits = float(request.form["sem_credits"])
             target_cgpa = float(request.form["target_cgpa"])
 
-            required_sgpa = required_SGPA(
+            required_sgpa = required_sgpa(
                 current_cgpa, current_credits, sem_credits, target_cgpa
             )
 
@@ -62,7 +62,7 @@ def estimator():
                 )
             else:
                 message = "Target Achievable"
-        except:
+        except Exception:
             message = "Invalid Input"
 
     return render_template(
@@ -70,7 +70,25 @@ def estimator():
     )
 
 
-def calculate_SGPA(credits, grades):
+@app.route("/finder", methods=["GET", "POST"])
+def finder():
+    found_sgpa = None
+
+    if request.method == "POST":
+        try:
+            prev_cgpa = float(request.form["prev_cgpa"])
+            prev_credits = float(request.form["prev_credits"])
+            new_cgpa = float(request.form["new_cgpa"])
+            sem_credits = float(request.form["sem_credits"])
+
+            found_sgpa = find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits)
+        except Exception:
+            found_sgpa = "Invalid Input"
+
+    return render_template("finder.html", sgpa=found_sgpa)
+
+
+def calculate_sgpa(credits, grades):
     total_points = 0
     total_credits = 0
 
@@ -81,7 +99,7 @@ def calculate_SGPA(credits, grades):
 
             total_points += c * grade_points[g]
             total_credits += c
-        except:
+        except Exception:
             continue
 
     if total_credits == 0:
@@ -90,10 +108,22 @@ def calculate_SGPA(credits, grades):
     return round(total_points / total_credits, 3)
 
 
-def required_SGPA(current_cgpa, current_credits, sem_credits, target_cgpa):
-    tc_after = current_credits + sem_credits
+def required_sgpa(current_cgpa, current_credits, sem_credits, target_cgpa):
+    if sem_credits == 0:
+        return None
 
+    tc_after = current_credits + sem_credits
     sgpa = (target_cgpa * tc_after - current_cgpa * current_credits) / sem_credits
+
+    return round(sgpa, 3)
+
+
+def find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits):
+    if sem_credits == 0:
+        return None
+
+    tc_after = sem_credits + prev_credits
+    sgpa = (new_cgpa * tc_after - prev_cgpa * prev_credits) / sem_credits
 
     return round(sgpa, 3)
 
