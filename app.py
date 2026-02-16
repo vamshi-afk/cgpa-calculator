@@ -15,11 +15,13 @@ grade_points = {
 }
 
 
+# Home
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html", active_tab="sgpa")
 
 
+# SGPA Calculator
 @app.route("/sgpa", methods=["GET", "POST"])
 def sgpa():
     sgpa_value = None
@@ -27,20 +29,23 @@ def sgpa():
     grades = []
 
     if request.method == "POST":
-
         credits = request.form.getlist("credits")
         grades = request.form.getlist("grade")
-
         sgpa_value = calculate_sgpa(credits, grades)
 
     return render_template(
-        "index.html", sgpa=sgpa_value, old_credits=credits, old_grades=grades
+        "index.html",
+        sgpa=sgpa_value,
+        old_credits=credits,
+        old_grades=grades,
+        active_tab="sgpa",
     )
 
 
+# CGPA Estimator
 @app.route("/estimator", methods=["GET", "POST"])
 def estimator():
-    required_sgpa = None
+    required_sgpa_value = None
     message = None
 
     if request.method == "POST":
@@ -50,26 +55,31 @@ def estimator():
             sem_credits = float(request.form["sem_credits"])
             target_cgpa = float(request.form["target_cgpa"])
 
-            required_sgpa = required_sgpa(
+            required_sgpa_value = required_sgpa(
                 current_cgpa, current_credits, sem_credits, target_cgpa
             )
 
-            if required_sgpa > 10:
-                message = "Target not Achievable,  required sgpa >10"
-            elif required_sgpa < 0:
-                message = (
-                    "Target already Achieved, if wrong please check your target cgpa"
-                )
+            if required_sgpa_value is None:
+                message = "Semester credits cannot be zero"
+            elif required_sgpa_value > 10:
+                message = "Target not achievable (required SGPA > 10)"
+            elif required_sgpa_value < 0:
+                message = "Target already achieved"
             else:
-                message = "Target Achievable"
+                message = "Target achievable"
+
         except Exception:
-            message = "Invalid Input"
+            message = "Invalid input"
 
     return render_template(
-        "estimator.html", required_sgpa=required_sgpa, message=message
+        "index.html",
+        required_sgpa=required_sgpa_value,
+        message=message,
+        active_tab="estimator",
     )
 
 
+# SGPA Finder
 @app.route("/finder", methods=["GET", "POST"])
 def finder():
     found_sgpa = None
@@ -82,10 +92,18 @@ def finder():
             sem_credits = float(request.form["sem_credits"])
 
             found_sgpa = find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits)
-        except Exception:
-            found_sgpa = "Invalid Input"
 
-    return render_template("finder.html", sgpa=found_sgpa)
+        except Exception:
+            found_sgpa = "Invalid input"
+
+    return render_template(
+        "index.html",
+        found_sgpa=found_sgpa,
+        active_tab="finder",
+    )
+
+
+# CALCULATION FUNCTIONS
 
 
 def calculate_sgpa(credits, grades):
@@ -112,8 +130,10 @@ def required_sgpa(current_cgpa, current_credits, sem_credits, target_cgpa):
     if sem_credits == 0:
         return None
 
-    tc_after = current_credits + sem_credits
-    sgpa = (target_cgpa * tc_after - current_cgpa * current_credits) / sem_credits
+    total_after = current_credits + sem_credits
+    sgpa = (
+        (target_cgpa * total_after) - (current_cgpa * current_credits)
+    ) / sem_credits
 
     return round(sgpa, 3)
 
@@ -122,8 +142,8 @@ def find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits):
     if sem_credits == 0:
         return None
 
-    tc_after = sem_credits + prev_credits
-    sgpa = (new_cgpa * tc_after - prev_cgpa * prev_credits) / sem_credits
+    total_after = prev_credits + sem_credits
+    sgpa = ((new_cgpa * total_after) - (prev_cgpa * prev_credits)) / sem_credits
 
     return round(sgpa, 3)
 
