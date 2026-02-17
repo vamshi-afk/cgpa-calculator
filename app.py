@@ -18,15 +18,21 @@ grade_points = {
 # Home
 @app.route("/")
 def home():
-    return render_template("index.html", active_tab="sgpa")
+    tab = request.args.get("tab", "sgpa")
+    return render_template("index.html", active_tab="tab")
 
 
 # SGPA Calculator
 @app.route("/sgpa", methods=["GET", "POST"])
 def sgpa():
     sgpa_value = None
-    credits = []
-    grades = []
+    credits = None
+    grades = None
+
+    est_current_cgpa = request.form.get("current_cgpa")
+    est_current_credits = request.form.get("current_credits")
+    est_sem_credits = request.form.get("sem_credits")
+    est_target_cgpa = request.form.get("target_cgpa")
 
     if request.method == "POST":
         credits = request.form.getlist("credits")
@@ -35,10 +41,14 @@ def sgpa():
 
     return render_template(
         "index.html",
-        sgpa=sgpa_value,
-        old_credits=credits,
-        old_grades=grades,
-        active_tab="sgpa",
+        sgpa=sgpa_value if request.method == "POST" else None,
+        old_credits=credits if request.method == "POST" else None,
+        old_grades=grades if request.method == "POST" else None,
+        est_current_cgpa=est_current_cgpa,
+        est_current_credits=est_current_credits,
+        est_sem_credits=est_sem_credits,
+        est_target_cgpa=est_target_cgpa,
+        active_tab=request.args.get("tab", "sgpa"),
     )
 
 
@@ -48,21 +58,27 @@ def estimator():
     required_sgpa_value = None
     message = None
 
+    credits = request.form.getlist("credits")
+    grades = request.form.getlist("grade")
+
+    est_current_cgpa = request.form.get("current_cgpa")
+    est_current_credits = request.form.get("current_credits")
+    est_sem_credits = request.form.get("sem_credits")
+    est_target_cgpa = request.form.get("target_cgpa")
+
     if request.method == "POST":
         try:
-            current_cgpa = float(request.form["current_cgpa"])
-            current_credits = float(request.form["current_credits"])
-            sem_credits = float(request.form["sem_credits"])
-            target_cgpa = float(request.form["target_cgpa"])
-
             required_sgpa_value = required_sgpa(
-                current_cgpa, current_credits, sem_credits, target_cgpa
+                float(est_current_cgpa),
+                float(est_current_credits),
+                float(est_sem_credits),
+                float(est_target_cgpa),
             )
 
             if required_sgpa_value is None:
                 message = "Semester credits cannot be zero"
             elif required_sgpa_value > 10:
-                message = "Target not achievable (required SGPA > 10)"
+                message = "Target not achievable (Required SGPA > 10)"
             elif required_sgpa_value < 0:
                 message = "Target already achieved"
             else:
@@ -75,35 +91,17 @@ def estimator():
         "index.html",
         required_sgpa=required_sgpa_value,
         message=message,
-        active_tab="estimator",
+        est_current_cgpa=est_current_cgpa,
+        est_current_credits=est_current_credits,
+        est_sem_credits=est_sem_credits,
+        est_target_cgpa=est_target_cgpa,
+        old_credits=credits,
+        old_grades=grades,
+        active_tab=request.args.get("tab", "estimator"),
     )
 
 
-# SGPA Finder
-@app.route("/finder", methods=["GET", "POST"])
-def finder():
-    found_sgpa = None
-
-    if request.method == "POST":
-        try:
-            prev_cgpa = float(request.form["prev_cgpa"])
-            prev_credits = float(request.form["prev_credits"])
-            new_cgpa = float(request.form["new_cgpa"])
-            sem_credits = float(request.form["sem_credits"])
-
-            found_sgpa = find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits)
-
-        except Exception:
-            found_sgpa = "Invalid input"
-
-    return render_template(
-        "index.html",
-        found_sgpa=found_sgpa,
-        active_tab="finder",
-    )
-
-
-# CALCULATION FUNCTIONS
+# CALCULATIONS
 
 
 def calculate_sgpa(credits, grades):
@@ -114,7 +112,6 @@ def calculate_sgpa(credits, grades):
         try:
             c = float(credits[i])
             g = grades[i]
-
             total_points += c * grade_points[g]
             total_credits += c
         except Exception:
@@ -131,19 +128,10 @@ def required_sgpa(current_cgpa, current_credits, sem_credits, target_cgpa):
         return None
 
     total_after = current_credits + sem_credits
+
     sgpa = (
         (target_cgpa * total_after) - (current_cgpa * current_credits)
     ) / sem_credits
-
-    return round(sgpa, 3)
-
-
-def find_sgpa(prev_cgpa, prev_credits, new_cgpa, sem_credits):
-    if sem_credits == 0:
-        return None
-
-    total_after = prev_credits + sem_credits
-    sgpa = ((new_cgpa * total_after) - (prev_cgpa * prev_credits)) / sem_credits
 
     return round(sgpa, 3)
 
