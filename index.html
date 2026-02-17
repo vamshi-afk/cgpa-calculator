@@ -30,11 +30,17 @@ body{background:#0f1115;color:#e6e6e6;}
 <h6 class="text-center mb-3">GPA Toolkit</h6>
 
 <ul class="nav nav-tabs nav-fill mb-3">
-<li class="nav-item"><button class="nav-link active" onclick="switchTab('sgpa')">SGPA</button></li>
-<li class="nav-item"><button class="nav-link" onclick="switchTab('estimator')">Estimator</button></li>
+<li class="nav-item">
+<button class="nav-link active" onclick="switchTab(event,'sgpa')">SGPA</button>
+</li>
+<li class="nav-item">
+<button class="nav-link" onclick="switchTab(event,'estimator')">Estimator</button>
+</li>
 </ul>
 
-<div id="sgpaTab" class="card"><div class="card-body">
+<!-- ================= SGPA TAB ================= -->
+<div id="sgpaTab" class="card">
+<div class="card-body">
 
 <div class="d-flex justify-content-between align-items-center mb-2">
 <small class="text-secondary">Subjects</small>
@@ -55,9 +61,12 @@ body{background:#0f1115;color:#e6e6e6;}
 
 <div id="sgpaResult" class="alert alert-success mt-3 d-none"></div>
 
-</div></div>
+</div>
+</div>
 
-<div id="estimatorTab" class="card d-none"><div class="card-body">
+<!-- ================= ESTIMATOR TAB ================= -->
+<div id="estimatorTab" class="card d-none">
+<div class="card-body">
 
 <input id="currentCgpa" type="number" step="0.01" class="form-control mb-2" placeholder="Current CGPA">
 <input id="currentCredits" type="number" step="1" class="form-control mb-2" placeholder="Total Credits">
@@ -68,21 +77,27 @@ body{background:#0f1115;color:#e6e6e6;}
 
 <div id="estimatorResult" class="alert alert-info mt-3 d-none"></div>
 
-</div></div>
+</div>
+</div>
 
 </div>
 
 <script>
 const gradePoints={S:10,"A+":9,A:8,"B+":7,B:6,C:5,D:4,E:3,NC:2};
 
-function switchTab(tab){
+// ================= TAB SWITCH =================
+function switchTab(e,tab){
 document.querySelectorAll(".nav-link").forEach(t=>t.classList.remove("active"));
-event.target.classList.add("active");
+e.target.classList.add("active");
 
 document.getElementById("sgpaTab").classList.toggle("d-none",tab!=="sgpa");
 document.getElementById("estimatorTab").classList.toggle("d-none",tab!=="estimator");
+
+// Save tab for refresh
+localStorage.setItem("activeTab",tab);
 }
 
+// ================= SUBJECT GENERATOR =================
 function setSubjects(n){
 const container=document.getElementById("subjects");
 container.innerHTML="";
@@ -103,6 +118,7 @@ container.innerHTML+=`
 }
 }
 
+// ================= SGPA =================
 function calculateSGPA(){
 const credits=[...document.querySelectorAll(".credits")].map(x=>parseFloat(x.value)||0);
 const grades=[...document.querySelectorAll(".grades")].map(x=>gradePoints[x.value]);
@@ -120,6 +136,7 @@ box.innerHTML=`<small>Your SGPA</small><strong class="float-end">${sgpa}</strong
 box.classList.remove("d-none");
 }
 
+// ================= ESTIMATOR =================
 function calculateEstimator(){
 const c=parseFloat(currentCgpa.value);
 const tc=parseFloat(currentCredits.value);
@@ -140,6 +157,17 @@ box.innerHTML=`<strong>${val}</strong><br><small>${msg}</small>`;
 box.classList.remove("d-none");
 }
 
+// ================= RESTORE TAB AFTER REFRESH =================
+const savedTab=localStorage.getItem("activeTab");
+
+if(savedTab==="estimator"){
+document.querySelectorAll(".nav-link").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll(".nav-link")[1].classList.add("active");
+document.getElementById("sgpaTab").classList.add("d-none");
+document.getElementById("estimatorTab").classList.remove("d-none");
+}
+
+// Default subjects
 setSubjects(5);
 </script>
 
