@@ -18,11 +18,11 @@ grade_points = {
 # Home
 @app.route("/")
 def home():
-    tab = request.args.get("tab", "sgpa")
-    return render_template("index.html", active_tab="tab")
+    tab = request.args.get("tab", "sgpa")  # default sgpa
+    return render_template("index.html", active_tab=tab)
 
 
-# SGPA Calculator
+# SGPA
 @app.route("/sgpa", methods=["GET", "POST"])
 def sgpa():
     sgpa_value = None
@@ -52,14 +52,11 @@ def sgpa():
     )
 
 
-# CGPA Estimator
+# Estimator
 @app.route("/estimator", methods=["GET", "POST"])
 def estimator():
     required_sgpa_value = None
     message = None
-
-    credits = request.form.getlist("credits")
-    grades = request.form.getlist("grade")
 
     est_current_cgpa = request.form.get("current_cgpa")
     est_current_credits = request.form.get("current_credits")
@@ -78,7 +75,7 @@ def estimator():
             if required_sgpa_value is None:
                 message = "Semester credits cannot be zero"
             elif required_sgpa_value > 10:
-                message = "Target not achievable (Required SGPA > 10)"
+                message = "Target not achievable"
             elif required_sgpa_value < 0:
                 message = "Target already achieved"
             else:
@@ -95,13 +92,13 @@ def estimator():
         est_current_credits=est_current_credits,
         est_sem_credits=est_sem_credits,
         est_target_cgpa=est_target_cgpa,
-        old_credits=credits,
-        old_grades=grades,
+        old_credits=None,
+        old_grades=None,
         active_tab=request.args.get("tab", "estimator"),
     )
 
 
-# CALCULATIONS
+# Calculations
 
 
 def calculate_sgpa(credits, grades):
@@ -114,7 +111,7 @@ def calculate_sgpa(credits, grades):
             g = grades[i]
             total_points += c * grade_points[g]
             total_credits += c
-        except Exception:
+        except:
             continue
 
     if total_credits == 0:
@@ -128,11 +125,7 @@ def required_sgpa(current_cgpa, current_credits, sem_credits, target_cgpa):
         return None
 
     total_after = current_credits + sem_credits
-
-    sgpa = (
-        (target_cgpa * total_after) - (current_cgpa * current_credits)
-    ) / sem_credits
-
+    sgpa = (target_cgpa * total_after - current_cgpa * current_credits) / sem_credits
     return round(sgpa, 3)
 
 
