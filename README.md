@@ -1,9 +1,3 @@
-Got you 👍 — here is **ONE clean single README** for your **main (Flask) branch**.
-Simple, clear, no extra fluff, ready to paste as `README.md`.
-
----
-
-````md
 # GPA Toolkit
 
 A simple web application to calculate SGPA and estimate required SGPA for a target CGPA.
