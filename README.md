@@ -27,7 +27,6 @@ This project is built using **Python (Flask)** for local usage and also has a st
 | B+    | 7 |
 | B     | 6 |
 | C     | 5 |
-| P     | 4 |
 | D     | 2 |
 | E     | 1 |
 | NC    | 0 |
