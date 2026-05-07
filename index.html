@@ -12,13 +12,14 @@ body{background:#0f1115;color:#e6e6e6;}
 .container{max-width:720px;}
 .card{background:#151922;border:1px solid #232838;}
 .nav-tabs{border:none;background:#121722;border-radius:10px;padding:4px;}
-.nav-tabs .nav-item{width:50%;}
-.nav-tabs .nav-link{border:none;border-radius:8px;color:#aab0c0;padding:10px 0;}
+.nav-tabs .nav-item{width:33.33%;}
+.nav-tabs .nav-link{border:none;border-radius:8px;color:#aab0c0;padding:10px 0;font-size:0.85rem;}
 .nav-tabs .nav-link.active{background:#1b2233;color:#fff;box-shadow:inset 0 0 0 1px #2a3042;}
 .form-control,.form-select{background:#0f1115;border:1px solid #2a3042;color:#e6e6e6;}
 .form-control:focus,.form-select:focus{border-color:#4c7dff;box-shadow:none;}
 .alert-success{background:#143022;border:none;color:#6ee7b7;}
 .alert-info{background:#10263f;border:none;color:#7dd3fc;}
+.alert-warning{background:#1f1a09;border:none;color:#fcd34d;}
 .tab-pane:not(.show){display:none;}
 </style>
 </head>
@@ -32,6 +33,9 @@ body{background:#0f1115;color:#e6e6e6;}
 <ul class="nav nav-tabs nav-fill mb-3">
 <li class="nav-item">
 <button class="nav-link active" onclick="switchTab(event,'sgpa')">SGPA</button>
+</li>
+<li class="nav-item">
+<button class="nav-link" onclick="switchTab(event,'cgpa')">CGPA</button>
 </li>
 <li class="nav-item">
 <button class="nav-link" onclick="switchTab(event,'estimator')">Estimator</button>
@@ -74,12 +78,28 @@ body{background:#0f1115;color:#e6e6e6;}
 </div>
 </div>
 
+<!-- ================= CGPA TAB ================= -->
+<div id="cgpaTab" class="card d-none">
+<div class="card-body">
+
+<input id="cgpaCurrentCgpa" type="number" step="0.01" class="form-control mb-2" placeholder="Current CGPA">
+<input id="cgpaCurrentCredits" type="number" step="1" class="form-control mb-2" placeholder="Total Credits So Far">
+<input id="cgpaSemCredits" type="number" step="1" class="form-control mb-2" placeholder="Semester Credits">
+<input id="cgpaSemSgpa" type="number" step="0.001" class="form-control mb-2" placeholder="Semester SGPA">
+
+<button class="btn btn-warning w-100" onclick="calculateCGPA()">Calculate CGPA</button>
+
+<div id="cgpaResult" class="alert alert-warning mt-3 d-none"></div>
+
+</div>
+</div>
+
 <!-- ================= ESTIMATOR TAB ================= -->
 <div id="estimatorTab" class="card d-none">
 <div class="card-body">
 
 <input id="currentCgpa" type="number" step="0.01" class="form-control mb-2" placeholder="Current CGPA">
-<input id="currentCredits" type="number" step="1" class="form-control mb-2" placeholder="Total Credits">
+<input id="currentCredits" type="number" step="1" class="form-control mb-2" placeholder="Total Credits So Far">
 <input id="semCredits" type="number" step="1" class="form-control mb-2" placeholder="Semester Credits">
 <input id="targetCgpa" type="number" step="0.01" class="form-control mb-2" placeholder="Target CGPA">
 
@@ -101,9 +121,9 @@ document.querySelectorAll(".nav-link").forEach(t=>t.classList.remove("active"));
 e.target.classList.add("active");
 
 document.getElementById("sgpaTab").classList.toggle("d-none",tab!=="sgpa");
+document.getElementById("cgpaTab").classList.toggle("d-none",tab!=="cgpa");
 document.getElementById("estimatorTab").classList.toggle("d-none",tab!=="estimator");
 
-// Save tab for refresh
 localStorage.setItem("activeTab",tab);
 }
 
@@ -146,6 +166,21 @@ box.innerHTML=`<small>Your SGPA</small><strong class="float-end">${sgpa}</strong
 box.classList.remove("d-none");
 }
 
+// ================= CGPA =================
+function calculateCGPA(){
+const prevCgpa=parseFloat(document.getElementById("cgpaCurrentCgpa").value);
+const prevCredits=parseFloat(document.getElementById("cgpaCurrentCredits").value);
+const semCredits=parseFloat(document.getElementById("cgpaSemCredits").value);
+const semSgpa=parseFloat(document.getElementById("cgpaSemSgpa").value);
+
+if(!prevCgpa||!prevCredits||!semCredits||!semSgpa)return;
+
+const newCgpa=((prevCgpa*prevCredits)+(semSgpa*semCredits))/(prevCredits+semCredits);
+const box=document.getElementById("cgpaResult");
+box.innerHTML=`<small>Updated CGPA</small><strong class="float-end">${newCgpa.toFixed(3)}</strong>`;
+box.classList.remove("d-none");
+}
+
 // ================= ESTIMATOR =================
 function calculateEstimator(){
 const c=parseFloat(currentCgpa.value);
@@ -170,15 +205,21 @@ box.classList.remove("d-none");
 // ================= RESTORE TAB AFTER REFRESH =================
 const savedTab=localStorage.getItem("activeTab");
 
-if(savedTab==="estimator"){
+if(savedTab==="cgpa"){
 document.querySelectorAll(".nav-link").forEach(t=>t.classList.remove("active"));
 document.querySelectorAll(".nav-link")[1].classList.add("active");
+document.getElementById("sgpaTab").classList.add("d-none");
+document.getElementById("cgpaTab").classList.remove("d-none");
+document.getElementById("estimatorTab").classList.add("d-none");
+} else if(savedTab==="estimator"){
+document.querySelectorAll(".nav-link").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll(".nav-link")[2].classList.add("active");
 document.getElementById("sgpaTab").classList.add("d-none");
 document.getElementById("estimatorTab").classList.remove("d-none");
 }
 
 // Default subjects
-setSubjects(5);
+setSubjects(6);
 </script>
 
 </body>
