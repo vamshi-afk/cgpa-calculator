@@ -9,6 +9,7 @@ This project is built using **Python (Flask)** for local usage and also has a st
 ## Features
 
 - SGPA Calculator using subject credits and grades
+- CGPA Calculator (calculate updated CGPA after a semester)
 - CGPA Estimator (calculate required SGPA to reach target CGPA)
 - Custom grade mapping
 - Clean minimal dark UI
